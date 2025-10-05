@@ -2,18 +2,18 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE = 'sonarqube'
-        SCANNER = 'SonarScanner'
-        SONAR_PROJECT_KEY = 'hello-python'
-        SONAR_API_TOKEN = credentials('sonar-token')  // Jenkins secret
-        SONAR_HOST_URL = 'http://35.200.255.91:9000' //Jenkin VM IP
+        SONARQUBE = 'sonarqube'                           // SonarQube server configured in Jenkins
+        SCANNER = 'SonarScanner'                          // SonarScanner tool name in Jenkins
+        SONAR_PROJECT_KEY = 'hello-python'               // Project key for SonarQube
+        SONAR_API_TOKEN = credentials('sonar-token')     // Jenkins secret for SonarQube
+        SONAR_HOST_URL = 'http://34.47.150.18:9000'     // Jenkins VM IP running SonarQube
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/Kruttikastudy/hello-python.git'  //github username
+                    url: 'https://github.com/Kruttikastudy/hello-python.git'
             }
         }
 
@@ -24,7 +24,7 @@ pipeline {
                   python3 -m pip install --upgrade pip
                   pip3 install --user -r requirements.txt
                   
-                  echo " Running tests..."
+                  echo "Running tests..."
                   python3 -m pytest -q
                 '''
             }
@@ -52,18 +52,17 @@ pipeline {
             steps {
                 sshagent(credentials: ['gce-ssh']) {
                     sh '''
-                        echo "Deploying with systemd..."
+                        echo "Deploying to App VM..."
+                        ssh -o StrictHostKeyChecking=no kruttikahebbar@34.131.33.179 "mkdir -p /home/kruttikahebbar/app"
+                        scp -o StrictHostKeyChecking=no -r * kruttikahebbar@34.131.33.179:/home/kruttikahebbar/app/
 
-                        ssh -o StrictHostKeyChecking=no kruttikahebbar@34.131.10.13"mkdir -p /home/kruttikahebbar/app"    //appvm (to check IP address whoami)
-                        scp -o StrictHostKeyChecking=no -r * kruttikahebbar@34.131.10.13:/home/kruttikahebbar/app/
-
-                        ssh -o StrictHostKeyChecking=no aditidraut46@34.131.10.13 "
+                        ssh -o StrictHostKeyChecking=no kruttikahebbar@34.131.33.179 "
                           sudo systemctl daemon-reload &&
                           sudo systemctl restart flaskapp &&
                           sudo systemctl enable flaskapp
                         "
 
-                        echo "Deployment complete. Check: curl http://34.131.10.13:8080"
+                        echo "Deployment complete. Check: curl http://34.131.33.179:8080"
                     '''
                 }
             }
@@ -86,10 +85,10 @@ pipeline {
 
     post {
         success {
-            echo " Pipeline Succeeded"
+            echo "Pipeline Succeeded"
         }
         failure {
-            echo " Pipeline Failed"
+            echo "Pipeline Failed"
         }
     }
 }
