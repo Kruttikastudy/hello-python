@@ -1,15 +1,16 @@
 pipeline {
-    agent any
+    agent { label 'ubuntu' }  // Make sure your Ubuntu VM is configured as a Jenkins agent with this label
 
     environment {
-        SONARQUBE = 'sonarqube'                           // SonarQube server configured in Jenkins
-        SCANNER = 'SonarScanner'                          // SonarScanner tool name in Jenkins
-        SONAR_PROJECT_KEY = 'hello-python'               // Project key for SonarQube
-        SONAR_API_TOKEN = credentials('sonar-token')     // Jenkins secret for SonarQube
-        SONAR_HOST_URL = 'http://34.47.150.18:9000'     // Jenkins VM IP running SonarQube
+        SONARQUBE = 'sonarqube'                        // SonarQube server configured in Jenkins
+        SCANNER = 'SonarScanner'                        // SonarScanner tool name in Jenkins
+        SONAR_PROJECT_KEY = 'hello-python'             // SonarQube project key
+        SONAR_API_TOKEN = credentials('sonar-token')   // Jenkins credential for SonarQube token
+        SONAR_HOST_URL = 'http://34.47.150.18:9000'   // Jenkins VM IP running SonarQube
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -23,19 +24,19 @@ pipeline {
                   echo "Installing dependencies..."
                   python3 -m pip install --upgrade pip
                   pip3 install --user -r requirements.txt
-                  
+
                   echo "Running tests..."
                   python3 -m pytest -q
                 '''
             }
         }
 
-        stage('SonarQube Analysis (Async)') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     withEnv(["PATH+SONAR=${tool SCANNER}/bin"]) {
                         sh '''
-                          echo "Running SonarQube scan asynchronously..."
+                          echo "Running SonarQube scan..."
                           sonar-scanner \
                             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
                             -Dsonar.sources=. \
