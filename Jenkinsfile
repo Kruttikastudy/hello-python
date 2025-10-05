@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'ubuntu' }  // Make sure your Ubuntu VM is configured as a Jenkins agent with this label
+    agent any // Make sure your Ubuntu VM is configured as a Jenkins agent with this label
 
     environment {
         SONARQUBE = 'sonarqube'                        // SonarQube server configured in Jenkins
